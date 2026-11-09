@@ -184,11 +184,49 @@ args
 
 ---
 
-## D. Docker Prometheus
+## Prometheus 观测框架
 
-**前置：** Docker Desktop 已启动；本机 `make run` 在 `:8000` 监听。
+标准链路：
 
-1. 启动
+```text
+Exporter 暴露指标 → Prometheus 拉取并存储 → Alertmanager 处理告警 → Grafana 可视化
+```
+
+| 环节 | 职责 | 本 demo 对应 |
+|------|------|----------------|
+| **Exporter** | 进程（或 sidecar）以 Prometheus 文本格式暴露 `/metrics` | 本服务即 Exporter：`GET :8000/metrics`（`promhttp` + Go runtime 指标） |
+| **Prometheus** | 按 `scrape_configs` **主动拉取**（pull），写入 TSDB，提供 PromQL | `make prom-up` → `:9090`；配置见 `deploy/prometheus.yml` |
+| **Alertmanager** | 接收 Prometheus 触发的告警，做分组 / 抑制 / 路由（邮件、IM 等） | **未部署**；生产中由 Prometheus `alerting` + 规则文件对接 |
+| **Grafana** | 以 Prometheus 为数据源做仪表盘与可视化 | **未部署**；本 demo 先用 Prometheus 自带 Graph；生产再接 Grafana |
+
+数据流示意：
+
+```text
+┌─────────────────────┐  scrape /metrics   ┌──────────────────┐  告警事件   ┌──────────────┐
+│  Exporter（本服务）  │ ─────────────────► │   Prometheus     │ ─────────► │ Alertmanager │
+│  :8000/metrics      │   pull + 存储 TSDB  │   :9090          │            │  分组/通知    │
+└─────────────────────┘                    └────────┬─────────┘            └──────────────┘
+                                                    │ PromQL 查询
+                                                    ▼
+                                           ┌──────────────────┐
+                                           │     Grafana      │
+                                           │   仪表盘可视化    │
+                                           └──────────────────┘
+```
+
+要点：
+
+1. **Pull 模型**：指标由 Exporter 暴露，Prometheus 定时来拉，而不是业务主动推（Pushgateway 是例外场景）。
+2. **本仓库已跑通前两环**：Exporter（服务）→ Prometheus（Docker）；Alertmanager / Grafana 属完整栈后续扩展。
+3. 泄漏演示可先用 `/metrics` + Prometheus Graph 看见上涨，再用 pprof / Delve 定因（见 B / D / E）。
+
+---
+
+## D. Docker Prometheus（Exporter → Prometheus）
+
+**前置：** Docker Desktop 已启动；本机 `make run` 在 `:8000` 监听（Exporter 已就绪）。
+
+1. 启动 Prometheus（拉取并存储）
 
 ```bash
 make prom-up
@@ -196,7 +234,7 @@ make prom-up
 
 2. 浏览器打开 Targets：<http://127.0.0.1:9090/targets>
 
-期望：`go-memleak-demo` → **UP**。  
+期望：`go-memleak-demo` → **UP**（说明 scrape Exporter 成功）。  
 macOS 上 scrape 地址为 `host.docker.internal:8000`（`docker-compose.yaml` 已配 `extra_hosts: host.docker.internal:host-gateway`）。
 
 本机 API 核对：
@@ -207,7 +245,7 @@ curl -sS 'http://127.0.0.1:9090/api/v1/targets' | grep -o '"health":"[^"]*"'
 
 期望含 `"health":"up"`。
 
-3. Graph 粘贴 PromQL（与 `/metrics` 一致）：
+3. Graph 粘贴 PromQL（与 Exporter `/metrics` 指标名一致）：
 
 ```promql
 go_goroutines
@@ -224,6 +262,8 @@ rate(go_memstats_alloc_bytes_total[1m])
 期望：堆相关曲线随时间右上扬；`go_goroutines` 维持在较高水平。
 
 本机查询样例：`go_goroutines ≈ 20`，`go_memstats_heap_alloc_bytes` 为数亿字节且持续增大。
+
+> 完整栈下一步通常是：在 Prometheus 配 recording/alerting rules → Alertmanager；Grafana 添加 Prometheus 数据源做面板。本 demo 到 Graph 查询即可闭环「看见泄漏」。
 
 4. 关闭
 
