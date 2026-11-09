@@ -8,6 +8,8 @@ import (
 type Bootstrap struct {
 	Server *Server `json:"server"`
 	Leak   *Leak   `json:"leak"`
+	Log    *Log    `json:"log"`
+	Sentry *Sentry `json:"sentry"`
 }
 
 type Server struct {
@@ -32,7 +34,6 @@ func (h *HTTP) TimeoutDuration() time.Duration {
 }
 
 type Leak struct {
-	// Mode is "leak" or "fixed".
 	Mode       string `json:"mode"`
 	Workers    int    `json:"workers"`
 	ChunkBytes int    `json:"chunk_bytes"`
@@ -48,4 +49,15 @@ func (l *Leak) IntervalDuration() time.Duration {
 		panic(fmt.Sprintf("invalid leak.interval: %v", err))
 	}
 	return d
+}
+
+type Log struct {
+	// Path is JSONL file for Filebeat, e.g. tmp/logs/app.jsonl
+	Path string `json:"path"`
+}
+
+type Sentry struct {
+	DSN         string `json:"dsn"`
+	Environment string `json:"environment"`
+	Debug       bool   `json:"debug"`
 }

@@ -3,3 +3,5 @@
 *.out
 *.prof
 .DS_Store
+.env
+.env.*

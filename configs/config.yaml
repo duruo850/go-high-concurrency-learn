@@ -10,3 +10,13 @@ leak:
   workers: 8
   chunk_bytes: 65536
   interval: 200ms
+
+# JSONL for Filebeat → Elasticsearch (ELK plan)
+log:
+  path: tmp/logs/app.jsonl
+
+# Leave empty for local runs without Sentry; or set SENTRY_DSN env (overrides).
+sentry:
+  dsn: ""
+  environment: local
+  debug: false

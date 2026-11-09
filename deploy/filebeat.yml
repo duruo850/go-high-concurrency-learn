@@ -1,0 +1,25 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /logs/*.jsonl
+    json.keys_under_root: true
+    json.add_error_key: true
+    fields:
+      app: go-memleak-demo
+    fields_under_root: true
+
+processors:
+  - add_host_metadata: ~
+
+output.elasticsearch:
+  hosts: ["elasticsearch:9200"]
+  index: "go-memleak-demo-%{+yyyy.MM.dd}"
+
+setup.ilm.enabled: false
+setup.template.name: "go-memleak-demo"
+setup.template.pattern: "go-memleak-demo-*"
+setup.kibana:
+  host: "kibana:5601"
+
+logging.level: info

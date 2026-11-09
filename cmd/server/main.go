@@ -2,9 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	"github.com/TripleCGame/go-memleak-demo/internal/conf"
+	"github.com/TripleCGame/go-memleak-demo/internal/observability/sentryx"
+	"github.com/TripleCGame/go-memleak-demo/internal/pkg/applog"
 	httpserver "github.com/TripleCGame/go-memleak-demo/internal/server/http"
 	"github.com/TripleCGame/go-memleak-demo/internal/service/echo"
 	"github.com/TripleCGame/go-memleak-demo/internal/service/leak"
@@ -51,15 +54,39 @@ func main() {
 		panic(err)
 	}
 
+	logPath := "tmp/logs/app.jsonl"
+	if bc.Log != nil && bc.Log.Path != "" {
+		logPath = bc.Log.Path
+	}
+	appLog, err := applog.New("go-memleak-demo", logPath)
+	if err != nil {
+		panic(err)
+	}
+	defer appLog.Close()
+	appLog.Info("server starting", map[string]any{"event": "startup", "conf": flagconf})
+
+	enabled, err := sentryx.Init(bc.Sentry)
+	if err != nil {
+		panic(err)
+	}
+	defer sentryx.Flush()
+	if enabled {
+		fmt.Println("sentry: enabled")
+		appLog.Info("sentry enabled", map[string]any{"event": "sentry_init"})
+	} else {
+		fmt.Println("sentry: disabled (set sentry.dsn or SENTRY_DSN to enable)")
+	}
+
 	leaker := leak.New(bc.Leak)
 	leaker.Start()
 	defer leaker.Stop()
 
 	echoSvc := echo.New()
-	hs := httpserver.NewHTTPServer(bc.Server, echoSvc, logger)
+	hs := httpserver.NewHTTPServer(bc.Server, echoSvc, appLog, logger)
 	app := newApp(logger, hs)
 
 	if err := app.Run(); err != nil {
+		appLog.Error("server stopped", map[string]any{"event": "shutdown", "error": err.Error()})
 		panic(err)
 	}
 }

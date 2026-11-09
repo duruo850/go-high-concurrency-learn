@@ -5,10 +5,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/TripleCGame/go-memleak-demo/internal/conf"
+	"github.com/TripleCGame/go-memleak-demo/internal/pkg/applog"
 	httpserver "github.com/TripleCGame/go-memleak-demo/internal/server/http"
 	"github.com/TripleCGame/go-memleak-demo/internal/service/echo"
 	"github.com/go-kratos/kratos/v2/log"
@@ -16,9 +19,17 @@ import (
 
 func newTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
+	dir := t.TempDir()
+	appLog, err := applog.New("test", filepath.Join(dir, "app.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = appLog.Close() })
+
 	srv := httpserver.NewHTTPServer(
 		&conf.Server{HTTP: &conf.HTTP{Addr: "127.0.0.1:0", Timeout: "2s"}},
 		echo.New(),
+		appLog,
 		log.NewStdLogger(io.Discard),
 	)
 	return httptest.NewServer(srv)
@@ -76,6 +87,43 @@ func TestEchoAPI(t *testing.T) {
 	}
 	if body2["message"] != "pong" {
 		t.Fatalf("default body = %#v, want message=pong", body2)
+	}
+}
+
+func TestLogDemoWritesJSONL(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "app.jsonl")
+	appLog, err := applog.New("test", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer appLog.Close()
+
+	srv := httpserver.NewHTTPServer(
+		&conf.Server{HTTP: &conf.HTTP{Addr: "127.0.0.1:0", Timeout: "2s"}},
+		echo.New(),
+		appLog,
+		log.NewStdLogger(io.Discard),
+	)
+	ts := httptest.NewServer(srv)
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + "/api/log-demo?topic=unit")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status=%d", resp.StatusCode)
+	}
+
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(b)
+	if !strings.Contains(s, `"event":"log_demo"`) || !strings.Contains(s, `"topic":"unit"`) {
+		t.Fatalf("log file missing fields:\n%s", s)
 	}
 }
 

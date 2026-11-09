@@ -1,12 +1,15 @@
 # Go Goroutine / 堆内存泄漏 Demo
 
-Kratos HTTP 演示服务：启动即按配置泄漏（或 fixed 对照），业务接口正常；配套 Prometheus / pprof / Delve 可复制调试剧本。
+Kratos HTTP 演示服务：启动即按配置泄漏（或 fixed 对照），业务接口正常；配套 Delve / pprof / Prometheus / ELK / Sentry 学习实验。
+
+**按顺序学习请看：[docs/README.md](./docs/README.md)**（`1plan-basics` → `7plan-compare`）。
 
 ## 前置条件
 
 - Go 1.23+（首次 `go` 命令可能会自动下载匹配的 toolchain）
-- Docker Desktop（Prometheus）
+- Docker Desktop（Prometheus / ELK）
 - Delve：`go install github.com/go-delve/delve/cmd/dlv@latest`
+- Sentry：免费云账号 DSN（可选，见 `docs/6plan-sentry.md`）
 
 工作目录一律为仓库根：`go-memleak-demo/`。
 
@@ -26,6 +29,8 @@ go mod tidy
 | `leak.chunk_bytes` | 每次分配字节数 |
 | `leak.interval` | 分配间隔（如 `200ms`） |
 | `server.http.addr` | 默认 `0.0.0.0:8000` |
+| `log.path` | JSONL 日志路径，默认 `tmp/logs/app.jsonl`（Filebeat 采集） |
+| `sentry.dsn` | Sentry DSN；空则禁用。也可用环境变量 `SENTRY_DSN` 覆盖 |
 
 泄漏在进程启动时自动开始，**没有** `/leak/*` 触发接口。
 
@@ -34,10 +39,14 @@ go mod tidy
 | 目标 | 作用 |
 |------|------|
 | `make test` | 单元 / httptest 功能测试 |
-| `make run` | 启动服务（自动泄漏） |
+| `make run` | 启动服务（自动泄漏 + 写 JSONL） |
 | `make echo` | curl `/health`、`/api/echo` |
 | `make metrics-watch` | 循环打印 `go_goroutines` / heap |
-| `make prom-up` / `make prom-down` | Docker Prometheus |
+| `make prom-up` / `make prom-down` | Docker Prometheus（profile `prom`） |
+| `make elk-up` / `make elk-down` | ES + Kibana + Filebeat（profile `elk`） |
+| `make elk-sample` | 打样例日志到 JSONL |
+| `make sentry-boom` / `make sentry-message` | 触发 Sentry 实验事件 |
+| `make obs-up` / `make obs-down` | 一次拉起 Prom + ELK |
 | `make pprof-capture` | 间隔抓 `tmp/pprof/h1.out`、`h2.out` |
 | `make pprof-top` | 终端 diff top / list（定因） |
 | `make pprof-diff` | 浏览器 pprof UI（diff） |
@@ -222,6 +231,82 @@ Exporter 暴露指标 → Prometheus 拉取并存储 → Alertmanager 处理告�
 
 ---
 
+## ELK 日志框架
+
+标准链路（经典 ELK；生产也常见 **EFK**：Fluentd/Fluent Bit 替代 Logstash）：
+
+```text
+应用 / Agent 采集日志 → Logstash（或 Beats）解析转发 → Elasticsearch 存储检索 → Kibana 可视化
+```
+
+| 环节 | 职责 | 本 demo 对应 |
+|------|------|----------------|
+| **采集端** | 应用打 JSONL，或 Filebeat / 容器 stdout 收集 | `applog` → `tmp/logs/app.jsonl`；也可用 `/api/log-demo` 造事件 |
+| **Logstash / Beats** | 过滤、解析，再 **推送** 到 ES | 本 demo 用 **Filebeat**（`deploy/filebeat.yml`）；未强制上 Logstash |
+| **Elasticsearch** | 海量半结构化日志的索引、全文检索、聚合 | `make elk-up` → `:9200`，index `go-memleak-demo-*` |
+| **Kibana** | 搜索、Discover、仪表盘 | `make elk-up` → `:5601` |
+
+数据流示意：
+
+```text
+┌──────────────────┐   push 日志    ┌─────────────────┐   索引写入   ┌──────────────────┐
+│  App / Filebeat  │ ─────────────► │ Logstash/Beats  │ ──────────► │ Elasticsearch    │
+│  stdout / 文件    │                │  解析 / 过滤     │             │  存储 + 检索      │
+└──────────────────┘                └─────────────────┘             └────────┬─────────┘
+                                                                             │ 查询
+                                                                             ▼
+                                                                    ┌──────────────────┐
+                                                                    │     Kibana       │
+                                                                    │  搜索 / 仪表盘    │
+                                                                    └──────────────────┘
+```
+
+要点：
+
+1. **Push 模型**：日志由应用或 Agent **推** 进管道，和 Prometheus 的 pull `/metrics` 相反。
+2. **擅长「事件现场」**：按关键词 / trace id / 时间窗查错误栈、访问日志、审计；不擅长「堆持续涨多少 MB」。
+3. **本仓库已可实验 ELK**：`make run` + `make elk-sample` + `make elk-up`；步骤见 [docs/5plan-elk.md](./docs/5plan-elk.md)。泄漏「看见上涨」仍靠 Prometheus；「定因到函数」靠 pprof / Delve。
+
+### Prometheus vs ELK（对照）
+
+| | **Prometheus** | **ELK** |
+|--|----------------|---------|
+| 主数据 | 时序**指标**（数字） | **日志 / 事件**（文本） |
+| 采集 | Pull Exporter `/metrics` | Push 到 Logstash/Beats → ES |
+| 存储 | TSDB | Elasticsearch |
+| 查询 | PromQL | Lucene / ES DSL / Kibana |
+| 可视化 | Graph / Grafana | Kibana |
+| 本 demo 泄漏场景 | 看 `go_memstats_*` / `go_goroutines` 上涨 | 可检索启动/错误日志，**不能替代** pprof 堆归因 |
+
+生产常见：**Prometheus（+ Grafana）管健康与容量，ELK 管日志排障**，两套一起用。
+
+---
+
+## Sentry 异常事件框架
+
+标准链路：
+
+```text
+SDK 捕获异常/消息 → 上报 Sentry → 指纹聚合成 Issue → 告警 / 指派 / Release
+```
+
+| 环节 | 本 demo |
+|------|---------|
+| SDK | `getsentry/sentry-go`（`internal/observability/sentryx`） |
+| 配置 | `sentry.dsn` 或环境变量 `SENTRY_DSN` |
+| 实验接口 | `GET /api/boom`（CaptureException）、`GET /api/boom-panic`（panic→recovery）、`GET /api/sentry-message` |
+| 自建后端 | **不强制**；学习用 sentry.io 免费 DSN 即可 |
+
+与 Prometheus / ELK 分工：见 [docs/6plan-sentry.md](./docs/6plan-sentry.md)、[docs/7plan-compare.md](./docs/7plan-compare.md)。
+
+```bash
+export SENTRY_DSN='https://...@....ingest.sentry.io/...'
+make run
+make sentry-boom
+```
+
+---
+
 ## D. Docker Prometheus（Exporter → Prometheus）
 
 **前置：** Docker Desktop 已启动；本机 `make run` 在 `:8000` 监听（Exporter 已就绪）。
@@ -337,14 +422,17 @@ github.com/TripleCGame/go-memleak-demo/internal/service/leak.(*Leaker).leakWorke
 ## 目录结构
 
 ```text
-cmd/server/                 # 入口：加载配置、启动泄漏、跑 Kratos App
-internal/conf/              # 配置结构
-internal/service/echo/      # GET /api/echo
-internal/service/leak/      # leakWorker / fixedWorker
-internal/server/http/       # /health /api/echo /metrics /debug/pprof
+cmd/server/                      # 入口
+internal/conf/                   # 配置
+internal/service/echo|leak/      # 业务与泄漏
+internal/server/http/            # HTTP：health/echo/metrics/pprof/log-demo/boom
+internal/pkg/applog/             # JSONL 日志（ELK）
+internal/observability/sentryx/  # Sentry SDK 封装
 configs/config.yaml
 deploy/prometheus.yml
-docker-compose.yaml
+deploy/filebeat.yml
+docker-compose.yaml              # profiles: prom | elk | all
+docs/                            # 分册学习计划 1plan…7plan
 Makefile
 scripts/metrics-once.sh
 ```
@@ -353,6 +441,8 @@ scripts/metrics-once.sh
 
 | 地址 | 用途 |
 |------|------|
-| `:8000` | 业务 + metrics + pprof |
+| `:8000` | 业务 + metrics + pprof + 实验 API |
 | `:9090` | Prometheus UI |
+| `:9200` | Elasticsearch |
+| `:5601` | Kibana |
 | `:8081` | `make pprof-diff` 本地 UI |
