@@ -1,0 +1,12 @@
+server:
+  http:
+    addr: 0.0.0.0:8000
+    timeout: 3s
+
+leak:
+  # leak: workers allocate and retain forever (goroutine + heap grow)
+  # fixed: workers allocate then release, exit after bounded work
+  mode: leak
+  workers: 8
+  chunk_bytes: 65536
+  interval: 200ms
