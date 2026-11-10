@@ -11,6 +11,7 @@
 | 5 | [5plan-elk.md](./5plan-elk.md) | ELK：日志采集与检索 | `make elk-up` + Kibana |
 | 6 | [6plan-sentry.md](./6plan-sentry.md) | Sentry：异常事件框架 | 配 DSN + `make sentry-boom` |
 | 7 | [7plan-compare.md](./7plan-compare.md) | Prometheus / ELK / Sentry 对照 | 复盘选型 |
+| 8 | [knowledge/8plan-million-short-conn.md](./knowledge/8plan-million-short-conn.md) | 架构 + 单进程在线量级 + 百万短连方案 | 先读文首 §A/§B，再读消峰与限流 |
 
 **分工速记**
 
@@ -20,3 +21,10 @@ ELK         →  日志全文检索，排查「发生了什么」
 Sentry      →  未处理异常 / 错误聚合成 Issue，「哪段代码炸了」
 Delve/pprof →  本机调试与堆定因（偏开发工具，不是监控平台）
 ```
+
+## 专题知识
+
+| 文档 | 内容 |
+|------|------|
+| [knowledge/8plan-million-short-conn.md](./knowledge/8plan-million-short-conn.md) | 百万短连接 / 高并发服务端架构（含 SVG） |
+| [knowledge/av-signaling-sfu-mcu-concurrency.md](./knowledge/av-signaling-sfu-mcu-concurrency.md) | 音视频传输：信令 + SFU/MCU，以及音视频高并发架构 |
