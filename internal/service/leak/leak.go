@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/TripleCGame/go-memleak-demo/internal/conf"
+	"github.com/TripleCGame/go-high-concurrency-learn/internal/conf"
 )
 
 // Leaker spawns background workers that either leak or stay bounded.

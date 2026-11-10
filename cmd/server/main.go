@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/TripleCGame/go-memleak-demo/internal/conf"
-	"github.com/TripleCGame/go-memleak-demo/internal/observability/sentryx"
-	"github.com/TripleCGame/go-memleak-demo/internal/pkg/applog"
-	httpserver "github.com/TripleCGame/go-memleak-demo/internal/server/http"
-	"github.com/TripleCGame/go-memleak-demo/internal/service/echo"
-	"github.com/TripleCGame/go-memleak-demo/internal/service/leak"
+	"github.com/TripleCGame/go-high-concurrency-learn/internal/conf"
+	"github.com/TripleCGame/go-high-concurrency-learn/internal/observability/sentryx"
+	"github.com/TripleCGame/go-high-concurrency-learn/internal/pkg/applog"
+	httpserver "github.com/TripleCGame/go-high-concurrency-learn/internal/server/http"
+	"github.com/TripleCGame/go-high-concurrency-learn/internal/service/echo"
+	"github.com/TripleCGame/go-high-concurrency-learn/internal/service/leak"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/file"
@@ -26,8 +26,8 @@ func init() {
 
 func newApp(logger log.Logger, hs *http.Server) *kratos.App {
 	return kratos.New(
-		kratos.ID("go-memleak-demo"),
-		kratos.Name("go-memleak-demo"),
+		kratos.ID("go-high-concurrency-learn"),
+		kratos.Name("go-high-concurrency-learn"),
 		kratos.Version("1.0.0"),
 		kratos.Logger(logger),
 		kratos.Server(hs),
@@ -40,7 +40,7 @@ func main() {
 	logger := log.With(log.NewStdLogger(os.Stdout),
 		"ts", log.DefaultTimestamp,
 		"caller", log.DefaultCaller,
-		"service", "go-memleak-demo",
+		"service", "go-high-concurrency-learn",
 	)
 
 	c := config.New(config.WithSource(file.NewSource(flagconf)))
@@ -58,7 +58,7 @@ func main() {
 	if bc.Log != nil && bc.Log.Path != "" {
 		logPath = bc.Log.Path
 	}
-	appLog, err := applog.New("go-memleak-demo", logPath)
+	appLog, err := applog.New("go-high-concurrency-learn", logPath)
 	if err != nil {
 		panic(err)
 	}

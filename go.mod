@@ -1,4 +1,4 @@
-module github.com/TripleCGame/go-memleak-demo
+module github.com/TripleCGame/go-high-concurrency-learn
 
 go 1.26.0
 

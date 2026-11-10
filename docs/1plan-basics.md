@@ -7,7 +7,7 @@
 ## 前置
 
 - Go 1.23+
-- 工作目录：`go-memleak-demo/`
+- 工作目录：`go-high-concurrency-learn/`
 
 ## 步骤
 

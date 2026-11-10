@@ -46,8 +46,8 @@ make elk-up
 4. Kibana 操作（首次）
 
 - Stack Management → Data Views（或 Index Patterns）
-- 创建匹配 `go-memleak-demo-*`（或 Filebeat 实际 index）
-- Discover 里搜 `go-memleak-demo` / `log_demo` / `echo`
+- 创建匹配 `go-high-concurrency-learn-*`（或 Filebeat 实际 index）
+- Discover 里搜 `go-high-concurrency-learn` / `log_demo` / `echo`
 
 5. 对照文件内容
 

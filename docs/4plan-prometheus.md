@@ -35,7 +35,7 @@ curl -sS http://127.0.0.1:8000/metrics | grep -E '^go_goroutines |^go_memstats_h
 make prom-up
 ```
 
-打开 http://127.0.0.1:9090/targets → `go-memleak-demo` 为 **UP**。
+打开 http://127.0.0.1:9090/targets → `go-high-concurrency-learn` 为 **UP**。
 
 3. Graph 查询
 

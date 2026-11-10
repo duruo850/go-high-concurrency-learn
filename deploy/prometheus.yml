@@ -3,7 +3,7 @@ global:
   evaluation_interval: 5s
 
 scrape_configs:
-  - job_name: go-memleak-demo
+  - job_name: go-high-concurrency-learn
     metrics_path: /metrics
     static_configs:
       # macOS Docker Desktop: host.docker.internal reaches the host process on :8000

@@ -28,7 +28,7 @@ dlv debug ./cmd/server --check-go-version=false -- -conf configs
 2. 打断点（真实符号）
 
 ```text
-break github.com/TripleCGame/go-memleak-demo/internal/service/leak.(*Leaker).leakWorker
+break github.com/TripleCGame/go-high-concurrency-learn/internal/service/leak.(*Leaker).leakWorker
 continue
 ```
 

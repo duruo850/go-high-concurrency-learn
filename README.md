@@ -1,4 +1,4 @@
-# Go Goroutine / 堆内存泄漏 Demo
+# Go 高并发学习
 
 Kratos HTTP 演示服务：启动即按配置泄漏（或 fixed 对照），业务接口正常；配套 Delve / pprof / Prometheus / ELK / Sentry 学习实验。
 
@@ -11,10 +11,10 @@ Kratos HTTP 演示服务：启动即按配置泄漏（或 fixed 对照），业�
 - Delve：`go install github.com/go-delve/delve/cmd/dlv@latest`
 - Sentry：免费云账号 DSN（可选，见 `docs/6plan-sentry.md`）
 
-工作目录一律为仓库根：`go-memleak-demo/`。
+工作目录一律为仓库根：`go-high-concurrency-learn/`。
 
 ```bash
-cd go-memleak-demo
+cd go-high-concurrency-learn
 go mod tidy
 ```
 
@@ -156,7 +156,7 @@ dlv debug ./cmd/server --check-go-version=false -- -conf configs
 3. 打断点（**真实符号名**，本仓库已验证）
 
 ```text
-break github.com/TripleCGame/go-memleak-demo/internal/service/leak.(*Leaker).leakWorker
+break github.com/TripleCGame/go-high-concurrency-learn/internal/service/leak.(*Leaker).leakWorker
 ```
 
 期望：`Breakpoint 1 set at ... leak.go:93`
@@ -243,7 +243,7 @@ Exporter 暴露指标 → Prometheus 拉取并存储 → Alertmanager 处理告�
 |------|------|----------------|
 | **采集端** | 应用打 JSONL，或 Filebeat / 容器 stdout 收集 | `applog` → `tmp/logs/app.jsonl`；也可用 `/api/log-demo` 造事件 |
 | **Logstash / Beats** | 过滤、解析，再 **推送** 到 ES | 本 demo 用 **Filebeat**（`deploy/filebeat.yml`）；未强制上 Logstash |
-| **Elasticsearch** | 海量半结构化日志的索引、全文检索、聚合 | `make elk-up` → `:9200`，index `go-memleak-demo-*` |
+| **Elasticsearch** | 海量半结构化日志的索引、全文检索、聚合 | `make elk-up` → `:9200`，index `go-high-concurrency-learn-*` |
 | **Kibana** | 搜索、Discover、仪表盘 | `make elk-up` → `:5601` |
 
 数据流示意：
@@ -319,7 +319,7 @@ make prom-up
 
 2. 浏览器打开 Targets：<http://127.0.0.1:9090/targets>
 
-期望：`go-memleak-demo` → **UP**（说明 scrape Exporter 成功）。  
+期望：`go-high-concurrency-learn` → **UP**（说明 scrape Exporter 成功）。  
 macOS 上 scrape 地址为 `host.docker.internal:8000`（`docker-compose.yaml` 已配 `extra_hosts: host.docker.internal:host-gateway`）。
 
 本机 API 核对：
@@ -379,7 +379,7 @@ make pprof-top
 请使用 **`-diff_base`**（Makefile 已写好）。本机实测 top 会指向：
 
 ```text
-github.com/TripleCGame/go-memleak-demo/internal/service/leak.(*Leaker).leakWorker
+github.com/TripleCGame/go-high-concurrency-learn/internal/service/leak.(*Leaker).leakWorker
 ```
 
 `list` 会落到 `internal/service/leak/leak.go` 中 `buf := make([]byte, l.chunkBytes)` 一行。
@@ -409,7 +409,7 @@ curl -sS 'http://127.0.0.1:8000/debug/pprof/goroutine?debug=1' | head -n 30
 期望看到：
 
 ```text
-github.com/TripleCGame/go-memleak-demo/internal/service/leak.(*Leaker).leakWorker
+github.com/TripleCGame/go-high-concurrency-learn/internal/service/leak.(*Leaker).leakWorker
 ```
 
 5. fixed 对照

@@ -1,7 +1,7 @@
 services:
   prometheus:
     image: prom/prometheus:v2.54.1
-    container_name: go-memleak-prometheus
+    container_name: go-hc-learn-prometheus
     profiles: ["prom", "all"]
     ports:
       - "9090:9090"
@@ -16,7 +16,7 @@ services:
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
-    container_name: go-memleak-elasticsearch
+    container_name: go-hc-learn-elasticsearch
     profiles: ["elk", "all"]
     environment:
       - discovery.type=single-node
@@ -35,7 +35,7 @@ services:
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.15.3
-    container_name: go-memleak-kibana
+    container_name: go-hc-learn-kibana
     profiles: ["elk", "all"]
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
@@ -48,7 +48,7 @@ services:
 
   filebeat:
     image: docker.elastic.co/beats/filebeat:8.15.3
-    container_name: go-memleak-filebeat
+    container_name: go-hc-learn-filebeat
     profiles: ["elk", "all"]
     user: root
     volumes:

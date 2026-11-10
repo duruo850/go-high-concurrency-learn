@@ -10,10 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/TripleCGame/go-memleak-demo/internal/conf"
-	"github.com/TripleCGame/go-memleak-demo/internal/pkg/applog"
-	httpserver "github.com/TripleCGame/go-memleak-demo/internal/server/http"
-	"github.com/TripleCGame/go-memleak-demo/internal/service/echo"
+	"github.com/TripleCGame/go-high-concurrency-learn/internal/conf"
+	"github.com/TripleCGame/go-high-concurrency-learn/internal/pkg/applog"
+	httpserver "github.com/TripleCGame/go-high-concurrency-learn/internal/server/http"
+	"github.com/TripleCGame/go-high-concurrency-learn/internal/service/echo"
 	"github.com/go-kratos/kratos/v2/log"
 )
 

@@ -1,4 +1,4 @@
-APP      := go-memleak-demo
+APP      := go-high-concurrency-learn
 ADDR     := 127.0.0.1:8000
 BASE     := http://$(ADDR)
 CONF     := configs
@@ -50,7 +50,7 @@ elk-up:
 	docker compose --profile elk up -d
 	@echo "Elasticsearch: http://127.0.0.1:9200"
 	@echo "Kibana:        http://127.0.0.1:5601"
-	@echo "Filebeat reads $(LOGDIR)/*.jsonl → index go-memleak-demo-*"
+	@echo "Filebeat reads $(LOGDIR)/*.jsonl → index go-high-concurrency-learn-*"
 
 elk-down:
 	docker compose --profile elk down

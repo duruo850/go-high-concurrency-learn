@@ -6,7 +6,7 @@ filebeat.inputs:
     json.keys_under_root: true
     json.add_error_key: true
     fields:
-      app: go-memleak-demo
+      app: go-high-concurrency-learn
     fields_under_root: true
 
 processors:
@@ -14,11 +14,11 @@ processors:
 
 output.elasticsearch:
   hosts: ["elasticsearch:9200"]
-  index: "go-memleak-demo-%{+yyyy.MM.dd}"
+  index: "go-high-concurrency-learn-%{+yyyy.MM.dd}"
 
 setup.ilm.enabled: false
-setup.template.name: "go-memleak-demo"
-setup.template.pattern: "go-memleak-demo-*"
+setup.template.name: "go-high-concurrency-learn"
+setup.template.pattern: "go-high-concurrency-learn-*"
 setup.kibana:
   host: "kibana:5601"
 
