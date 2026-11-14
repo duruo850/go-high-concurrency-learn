@@ -10,8 +10,8 @@
 | 4 | [plan/4plan-prometheus.md](./plan/4plan-prometheus.md) | Prometheus：指标监控框架 | `make prom-up` + Graph |
 | 5 | [plan/5plan-elk.md](./plan/5plan-elk.md) | ELK：日志采集与检索 | `make elk-up` + Kibana |
 | 6 | [plan/6plan-sentry.md](./plan/6plan-sentry.md) | Sentry：异常事件框架 | 配 DSN + `make sentry-boom` |
-| 7 | [plan/8plan-tracing.md](./plan/8plan-tracing.md) | 链路追踪：OTel → Jaeger | `make jaeger-up` + `make trace-demo` |
-| 8 | [plan/7plan-compare.md](./plan/7plan-compare.md) | Prometheus / ELK / Sentry / Tracing 对照 | 复盘选型 |
+| 7 | [plan/7plan-tracing.md](./plan/7plan-tracing.md) | 链路追踪：OTel → Jaeger | `make jaeger-up` + `make trace-demo` |
+| 8 | [plan/8plan-compare.md](./plan/8plan-compare.md) | Prometheus / ELK / Sentry / Tracing 对照 | 复盘选型 |
 
 **分工速记**
 

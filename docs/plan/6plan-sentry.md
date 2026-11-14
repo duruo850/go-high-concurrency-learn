@@ -75,4 +75,4 @@ curl -sS 'http://127.0.0.1:8000/api/sentry-message?msg=hello-sentry'
 
 ## 下一篇
 
-→ [8plan-tracing.md](./8plan-tracing.md)
+→ [7plan-tracing.md](./7plan-tracing.md)

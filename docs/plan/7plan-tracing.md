@@ -1,4 +1,4 @@
-# 8. 链路追踪：OpenTelemetry → Jaeger
+# 7. 链路追踪：OpenTelemetry → Jaeger
 
 ## 目标
 
@@ -112,4 +112,4 @@ make jaeger-down
 
 ## 下一篇
 
-→ [7plan-compare.md](./7plan-compare.md)（把 Tracing 一并对照）
+→ [8plan-compare.md](./8plan-compare.md)（把 Tracing 一并对照）

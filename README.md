@@ -2,7 +2,7 @@
 
 Kratos HTTP 演示服务：启动即按配置泄漏（或 fixed 对照），业务接口正常；配套 Delve / pprof / Prometheus / ELK / Sentry / **链路追踪（OTel→Jaeger）** 学习实验。
 
-**按顺序学习请看：[docs/README.md](./docs/README.md)**（`1plan-basics` → `8plan-tracing`）。
+**按顺序学习请看：[docs/README.md](./docs/README.md)**（`1plan-basics` → `8plan-compare`）。
 
 ## 前置条件
 
@@ -10,7 +10,7 @@ Kratos HTTP 演示服务：启动即按配置泄漏（或 fixed 对照），业�
 - Docker Desktop（Prometheus / ELK）
 - Delve：`go install github.com/go-delve/delve/cmd/dlv@latest`
 - Sentry：免费云账号 DSN（可选，见 `docs/plan/6plan-sentry.md`）
-- 链路追踪：Docker Jaeger（见 `docs/plan/8plan-tracing.md`）
+- 链路追踪：Docker Jaeger（见 `docs/plan/7plan-tracing.md`）
 
 工作目录一律为仓库根：`go-high-concurrency-learn/`。
 
@@ -302,7 +302,7 @@ SDK 捕获异常/消息 → 上报 Sentry → 指纹聚合成 Issue → 告警 /
 | 实验接口 | `GET /api/boom`（CaptureException）、`GET /api/boom-panic`（panic→recovery）、`GET /api/sentry-message` |
 | 自建后端 | **不强制**；学习用 sentry.io 免费 DSN 即可 |
 
-与 Prometheus / ELK 分工：见 [docs/6plan-sentry.md](./docs/6plan-sentry.md)、[docs/7plan-compare.md](./docs/7plan-compare.md)。
+与 Prometheus / ELK 分工：见 [docs/plan/6plan-sentry.md](./docs/plan/6plan-sentry.md)、[docs/plan/8plan-compare.md](./docs/plan/8plan-compare.md)。
 
 ```bash
 export SENTRY_DSN='https://...@....ingest.sentry.io/...'
@@ -437,7 +437,7 @@ configs/config.yaml
 deploy/prometheus.yml
 deploy/filebeat.yml
 docker-compose.yaml              # profiles: prom | elk | all
-docs/                            # 分册学习计划 1plan…7plan
+docs/                            # 分册学习计划 1plan…8plan
 Makefile
 scripts/metrics-once.sh
 ```
