@@ -57,6 +57,24 @@
 | **Alertmanager** | 接收 Prometheus 发出的告警，做分组、抑制、静默、路由到通知渠道 | 自己不算指标；规则仍写在 Prometheus 侧 |
 | **Grafana** | 以 Prometheus 为 **数据源**，做仪表盘、多数据源对照、更丰富告警/分享 | 不替代 Prometheus 存储；PromQL 仍在 Prometheus 上算 |
 
+### Exporter 用的 Go 库（本仓库）
+
+| | |
+|--|--|
+| **库** | [`github.com/prometheus/client_golang`](https://github.com/prometheus/client_golang) |
+| **HTTP 暴露** | `prometheus/promhttp` → `promhttp.Handler()` |
+| **默认指标** | 挂上 Handler 即带 **Go runtime + process** collector（`go_*` / `process_*`） |
+| **自定义指标** | 同库的 `prometheus.NewCounter/Gauge/Histogram` + `MustRegister`（本 demo 未加业务指标） |
+| **本仓库落点** | `internal/server/http/http.go`：`srv.Handle("/metrics", promhttp.Handler())` |
+| **go.mod** | `github.com/prometheus/client_golang v1.20.5` |
+
+```go
+import "github.com/prometheus/client_golang/prometheus/promhttp"
+
+// 一行即可当 Exporter：Prometheus 来拉这个路径
+srv.Handle("/metrics", promhttp.Handler())
+```
+
 **Pull 模型：** 业务进程只暴露 `/metrics`，由 Prometheus 按 `scrape_interval` 来拉。  
 例外才是 Pushgateway（短任务 / 批处理），本仓库不用。
 
