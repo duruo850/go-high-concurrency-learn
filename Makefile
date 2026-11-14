@@ -7,6 +7,7 @@ LOGDIR   := tmp/logs
 
 .PHONY: run test echo metrics-watch \
 	prom-up prom-down elk-up elk-down elk-sample obs-up obs-down \
+	jaeger-up jaeger-down trace-demo \
 	pprof-capture pprof-diff pprof-top pprof-heap \
 	sentry-boom sentry-message tidy
 
@@ -66,10 +67,23 @@ elk-sample:
 obs-up:
 	@mkdir -p $(LOGDIR)
 	docker compose --profile all up -d
-	@echo "Prometheus :9090 | Kibana :5601 | ES :9200"
+	@echo "Prometheus :9090 | Kibana :5601 | ES :9200 | Jaeger :16686 (OTLP :4318)"
 
 obs-down:
 	docker compose --profile all down
+
+jaeger-up:
+	docker compose --profile trace up -d
+	@echo "Jaeger UI:  http://127.0.0.1:16686"
+	@echo "OTLP HTTP:  http://127.0.0.1:4318"
+	@echo "Then: export OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318 && make run"
+
+jaeger-down:
+	docker compose --profile trace down
+
+trace-demo:
+	@echo "==> GET /api/trace-demo (need tracing enabled)"
+	@curl -sS -w "\nHTTP %{http_code}\n" $(BASE)/api/trace-demo
 
 pprof-capture:
 	@mkdir -p $(PPROFDIR)

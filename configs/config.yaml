@@ -20,3 +20,9 @@ sentry:
   dsn: ""
   environment: local
   debug: false
+
+# OpenTelemetry → OTLP/HTTP (Jaeger all-in-one :4318). Empty = disabled.
+# Env OTEL_EXPORTER_OTLP_ENDPOINT overrides. make jaeger-up 后可改为 http://127.0.0.1:4318
+trace:
+  endpoint: ""
+  sample_ratio: 1.0

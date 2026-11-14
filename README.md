@@ -1,15 +1,16 @@
 # Go 高并发学习
 
-Kratos HTTP 演示服务：启动即按配置泄漏（或 fixed 对照），业务接口正常；配套 Delve / pprof / Prometheus / ELK / Sentry 学习实验。
+Kratos HTTP 演示服务：启动即按配置泄漏（或 fixed 对照），业务接口正常；配套 Delve / pprof / Prometheus / ELK / Sentry / **链路追踪（OTel→Jaeger）** 学习实验。
 
-**按顺序学习请看：[docs/README.md](./docs/README.md)**（`1plan-basics` → `7plan-compare`）。
+**按顺序学习请看：[docs/README.md](./docs/README.md)**（`1plan-basics` → `8plan-tracing`）。
 
 ## 前置条件
 
 - Go 1.23+（首次 `go` 命令可能会自动下载匹配的 toolchain）
 - Docker Desktop（Prometheus / ELK）
 - Delve：`go install github.com/go-delve/delve/cmd/dlv@latest`
-- Sentry：免费云账号 DSN（可选，见 `docs/6plan-sentry.md`）
+- Sentry：免费云账号 DSN（可选，见 `docs/plan/6plan-sentry.md`）
+- 链路追踪：Docker Jaeger（见 `docs/plan/8plan-tracing.md`）
 
 工作目录一律为仓库根：`go-high-concurrency-learn/`。
 
@@ -31,6 +32,8 @@ go mod tidy
 | `server.http.addr` | 默认 `0.0.0.0:8000` |
 | `log.path` | JSONL 日志路径，默认 `tmp/logs/app.jsonl`（Filebeat 采集） |
 | `sentry.dsn` | Sentry DSN；空则禁用。也可用环境变量 `SENTRY_DSN` 覆盖 |
+| `trace.endpoint` | OTLP/HTTP 地址（如 `http://127.0.0.1:4318`）；空则禁用。也可用 `OTEL_EXPORTER_OTLP_ENDPOINT` |
+| `trace.sample_ratio` | 采样率 0～1，学习默认 `1.0` |
 
 泄漏在进程启动时自动开始，**没有** `/leak/*` 触发接口。
 
@@ -46,7 +49,9 @@ go mod tidy
 | `make elk-up` / `make elk-down` | ES + Kibana + Filebeat（profile `elk`） |
 | `make elk-sample` | 打样例日志到 JSONL |
 | `make sentry-boom` / `make sentry-message` | 触发 Sentry 实验事件 |
-| `make obs-up` / `make obs-down` | 一次拉起 Prom + ELK |
+| `make jaeger-up` / `make jaeger-down` | Docker Jaeger（OTLP :4318，UI :16686） |
+| `make trace-demo` | 触发 `/api/trace-demo` 父子 span |
+| `make obs-up` / `make obs-down` | 一次拉起 Prom + ELK + Jaeger |
 | `make pprof-capture` | 间隔抓 `tmp/pprof/h1.out`、`h2.out` |
 | `make pprof-top` | 终端 diff top / list（定因） |
 | `make pprof-diff` | 浏览器 pprof UI（diff） |

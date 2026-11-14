@@ -10,6 +10,7 @@ type Bootstrap struct {
 	Leak   *Leak   `json:"leak"`
 	Log    *Log    `json:"log"`
 	Sentry *Sentry `json:"sentry"`
+	Trace  *Trace  `json:"trace"`
 }
 
 type Server struct {
@@ -60,4 +61,12 @@ type Sentry struct {
 	DSN         string `json:"dsn"`
 	Environment string `json:"environment"`
 	Debug       bool   `json:"debug"`
+}
+
+// Trace is OpenTelemetry → OTLP exporter settings.
+type Trace struct {
+	// Endpoint e.g. http://127.0.0.1:4318 (Jaeger / OTel Collector OTLP HTTP).
+	// Empty disables tracing. Env OTEL_EXPORTER_OTLP_ENDPOINT overrides.
+	Endpoint    string  `json:"endpoint"`
+	SampleRatio float64 `json:"sample_ratio"`
 }

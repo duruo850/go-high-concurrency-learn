@@ -127,6 +127,31 @@ func TestLogDemoWritesJSONL(t *testing.T) {
 	}
 }
 
+func TestTraceDemo(t *testing.T) {
+	ts := newTestServer(t)
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + "/api/trace-demo")
+	if err != nil {
+		t.Fatalf("GET /api/trace-demo: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status=%d", resp.StatusCode)
+	}
+	var body map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if body["ok"] != true {
+		t.Fatalf("body=%#v", body)
+	}
+	steps, ok := body["steps"].([]any)
+	if !ok || len(steps) < 3 {
+		t.Fatalf("steps=%#v", body["steps"])
+	}
+}
+
 func TestMetricsAndPprof(t *testing.T) {
 	ts := newTestServer(t)
 	defer ts.Close()

@@ -8,6 +8,7 @@ import (
 
 	"github.com/TripleCGame/go-high-concurrency-learn/internal/conf"
 	"github.com/TripleCGame/go-high-concurrency-learn/internal/observability/sentryx"
+	"github.com/TripleCGame/go-high-concurrency-learn/internal/observability/tracex"
 	"github.com/TripleCGame/go-high-concurrency-learn/internal/pkg/applog"
 	"github.com/TripleCGame/go-high-concurrency-learn/internal/service/echo"
 	"github.com/go-kratos/kratos/v2/errors"
@@ -17,9 +18,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// NewHTTPServer wires health, metrics, pprof, echo, ELK demo log and Sentry demo APIs.
+// NewHTTPServer wires health, metrics, pprof, echo, ELK / Sentry / tracing demo APIs.
 func NewHTTPServer(c *conf.Server, echoSvc *echo.Service, appLog *applog.Logger, logger log.Logger) *khttp.Server {
 	var opts = []khttp.ServerOption{
+		khttp.Filter(tracex.HTTPFilter),
 		khttp.Middleware(
 			recovery.Recovery(recovery.WithHandler(func(ctx context.Context, _, err any) error {
 				sentryx.Recover(err)
@@ -56,9 +58,32 @@ func NewHTTPServer(c *conf.Server, echoSvc *echo.Service, appLog *applog.Logger,
 		msg := ctx.Query().Get("msg")
 		out := echoSvc.Echo(ctx, msg)
 		if appLog != nil {
-			appLog.Info("echo", map[string]any{"msg": out, "event": "echo"})
+			fields := map[string]any{"msg": out, "event": "echo"}
+			if tid := tracex.TraceID(ctx); tid != "" {
+				fields["trace_id"] = tid
+			}
+			appLog.Info("echo", fields)
 		}
 		return ctx.Result(http.StatusOK, map[string]string{"message": out})
+	})
+
+	// Tracing learning: nested spans (auth → db → downstream) for Jaeger waterfall.
+	r.GET("/api/trace-demo", func(ctx khttp.Context) error {
+		tid, steps := tracex.DemoWalk(ctx)
+		if appLog != nil {
+			appLog.Info("trace demo", map[string]any{
+				"event":    "trace_demo",
+				"trace_id": tid,
+				"steps":    steps,
+			})
+		}
+		return ctx.Result(http.StatusOK, map[string]any{
+			"ok":         true,
+			"trace_id":   tid,
+			"steps":      steps,
+			"hint":       "open Jaeger UI → service go-high-concurrency-learn → Find Traces",
+			"jaeger_url": "http://127.0.0.1:16686",
+		})
 	})
 
 	// ELK learning: emit a structured log line intentionally.
